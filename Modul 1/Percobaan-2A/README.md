@@ -1,6 +1,6 @@
 
 ## Dokumentasi Percobaan 2A
-![Dokumentasi Percobaan 2A](\repo Praktikum IoT\Modul 1\Dokumentasi\Percobaan-2A.jpeg)
+![Dokumentasi Percobaan 2A](![Dokumentasi Percobaan 2A](Dokumentasi/Percobaan-2A.jpeg))
 
 # Penjelasan Kode Kontrol Aktuator (Relay) Berdasarkan Suhu DHT11
  
