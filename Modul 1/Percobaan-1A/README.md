@@ -1,6 +1,6 @@
 
 ## Dokumentasi Percobaan 1A
-![Dokumentasi Percobaan 1A](![Dokumentasi Percobaan 1A](Dokumentasi/Percobaan-1A.jpeg))
+![Dokumentasi Percobaan 1A](Dokumentasi/Percobaan-1A.jpeg)
 
 # Penjelasan Kode Akuisisi Data Sensor DHT11
  
