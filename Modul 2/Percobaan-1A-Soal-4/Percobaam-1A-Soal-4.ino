@@ -30,7 +30,7 @@ void setup() {
   Serial.print("Menghubungkan ke WiFi");
   unsigned long startAttempt = millis();
 
-  // ---- Tambahan: batasi waktu tunggu awal (timeout) agar tidak hang selamanya ----
+  // Tambahan: batasi waktu tunggu awal (timeout) agar tidak hang selamanya 
   while (WiFi.status() != WL_CONNECTED && millis() - startAttempt < 15000) {
     delay(500);
     Serial.print(".");

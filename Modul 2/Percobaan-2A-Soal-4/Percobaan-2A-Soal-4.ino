@@ -1,83 +1,75 @@
 #include <ESP8266WiFi.h>
 
-const char* ssid     = "NAMA_WIFI_ANDA";
-const char* password = "PASSWORD_WIFI_ANDA";
+// Kredensial untuk mode Station (menghubungkan ke WiFi rumah) 
+const char* sta_ssid     = "NAMA_WIFI_RUMAH_ANDA";
+const char* sta_password = "PASSWORD_WIFI_RUMAH_ANDA";
 
-const int ledPin = 2;   // LED indikator status koneksi
+// Kredensial untuk mode Access Point (yang disediakan ESP32) 
+const char* ap_ssid     = "ESP32_AccessPoint";
+const char* ap_password = "12345678"; // minimal 8 karakter
 
-// Tambahan untuk fitur auto-reconnect --
-unsigned long previousReconnectMillis = 0;      // Waktu terakhir mencoba reconnect
-const unsigned long reconnectInterval = 5000;   // Jarak antar percobaan reconnect (ms)
-
+const int ledPin = 2;   // LED indikator status koneksi STA
 
 void setup() {
   Serial.begin(115200);
   pinMode(ledPin, OUTPUT);
   digitalWrite(ledPin, LOW);
 
-  // Set mode WiFi menjadi Station
-  WiFi.mode(WIFI_STA);
+  // Set mode WiFi menjadi AP+STA (gabungan Access Point dan Station) 
+  WiFi.mode(WIFI_AP_STA);
 
-  // aktifkan auto-reconnect bawaan library WiFi 
-  // Jika koneksi terputus, ESP32 akan otomatis mencoba menyambung
-  // kembali menggunakan SSID/password terakhir yang digunakan.
-  WiFi.setAutoReconnect(true);
-  WiFi.persistent(true);
+  // Bagian Access Point: aktifkan hotspot ESP32 
+  WiFi.softAP(ap_ssid, ap_password);
+  IPAddress apIP = WiFi.softAPIP();
 
+  Serial.println("Access Point aktif!");
+  Serial.print("AP SSID       : ");
+  Serial.println(ap_ssid);
+  Serial.print("AP IP Address : ");
+  Serial.println(apIP);
 
-  WiFi.begin(ssid, password);
+  // Bagian Station: mulai koneksi ke WiFi rumah 
+  WiFi.begin(sta_ssid, sta_password);
+  Serial.print("Menghubungkan ke WiFi rumah");
 
-  Serial.print("Menghubungkan ke WiFi");
   unsigned long startAttempt = millis();
-
-  // ---- Tambahan: batasi waktu tunggu awal (timeout) agar tidak hang selamanya ----
+  // Batasi waktu tunggu koneksi STA maksimal 15 detik agar AP tetap bisa
+  // diakses meskipun koneksi ke WiFi rumah belum/tidak berhasil
   while (WiFi.status() != WL_CONNECTED && millis() - startAttempt < 15000) {
     delay(500);
     Serial.print(".");
   }
-  
+  Serial.println();
 
   if (WiFi.status() == WL_CONNECTED) {
-    // Jika berhasil terhubung
-    Serial.println();
-    Serial.println("WiFi berhasil terhubung!");
-    Serial.print("IP Address  : ");
+    Serial.println("STA berhasil terhubung ke WiFi rumah!");
+    Serial.print("STA IP Address  : ");
     Serial.println(WiFi.localIP());
-    Serial.print("MAC Address : ");
+    Serial.print("STA MAC Address : ");
     Serial.println(WiFi.macAddress());
-    Serial.print("RSSI (dBm)  : ");
+    Serial.print("STA RSSI (dBm)  : ");
     Serial.println(WiFi.RSSI());
-
-    digitalWrite(ledPin, HIGH); // nyalakan LED sebagai indikator
+    digitalWrite(ledPin, HIGH);
   } else {
-    // Tambahan: penanganan jika gagal konek saat pertama kali 
-    Serial.println();
-    Serial.println("Gagal terhubung dalam waktu yang ditentukan, akan dicoba lagi di loop().");
+    Serial.println("STA gagal terhubung ke WiFi rumah (AP tetap aktif).");
     digitalWrite(ledPin, LOW);
-    
   }
 }
 
 void loop() {
-  // Cek status koneksi setiap 5 detik
+  // Pantau status koneksi STA setiap 5 detik
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("Status: Terhubung");
+    Serial.println("Status STA: Terhubung ke WiFi rumah");
     digitalWrite(ledPin, HIGH);
   } else {
-    Serial.println("Status: Terputus");
+    Serial.println("Status STA: Terputus dari WiFi rumah");
     digitalWrite(ledPin, LOW);
-
-    // logika reconnect otomatis 
-    unsigned long currentMillis = millis();
-    // Cek apakah sudah waktunya mencoba reconnect lagi
-    // (mencegah pemanggilan WiFi.reconnect() terlalu sering / spam)
-    if (currentMillis - previousReconnectMillis >= reconnectInterval) {
-      previousReconnectMillis = currentMillis;
-      Serial.println("Mencoba menghubungkan ulang ke WiFi...");
-      WiFi.disconnect();     // Pastikan koneksi lama dibersihkan dahulu
-      WiFi.reconnect();      // Coba sambungkan kembali menggunakan kredensial terakhir
-    }
   }
+
+  // Pantau jumlah perangkat yang terhubung ke AP ESP32 
+  int jumlahClient = WiFi.softAPgetStationNum();
+  Serial.print("Jumlah perangkat terhubung ke AP: ");
+  Serial.println(jumlahClient);
 
   delay(5000);
 }
