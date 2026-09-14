@@ -1,5 +1,5 @@
 # Percobaan 2A: Konfigurasi Mode Station (STA)
-![Dokumentasi Percobaan 2A](../Dokumentasi/Percobaan-2A.jpeg)
+![Dokumentasi Percobaan 2A](../Dokumentasi/Percobaan2A.jpeg)
 
 ## Tujuan
 Memahami dan mengimplementasikan konfigurasi ESP32 pada mode Station (STA) agar

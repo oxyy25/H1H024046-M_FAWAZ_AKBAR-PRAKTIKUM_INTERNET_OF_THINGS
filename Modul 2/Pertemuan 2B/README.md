@@ -1,5 +1,5 @@
 # Percobaan 2B: Konfigurasi Mode Access Point (AP)
-![Dokumentasi Percobaan 2B](../Dokumentasi/Percobaan-2B.jpeg)
+![Dokumentasi Percobaan 2B](../Dokumentasi/Percobaan2B.jpeg)
 
 ## Tujuan
 Memahami dan mengimplementasikan konfigurasi ESP32 sebagai Access Point (AP)
