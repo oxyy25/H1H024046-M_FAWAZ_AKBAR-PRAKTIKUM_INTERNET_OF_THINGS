@@ -1,92 +1,73 @@
-## Dokumentasi Percobaan 2A
-![Dokumentasi Percobaan 2A](Dokumentasi/Percobaan2A.jpeg)
+## Modifikasi Program: Auto-Reconnect WiFi pada ESP8266 (Mode Station)
 
-## Modifikasi Program: Mode AP+STA pada ESP32
+Program ini merupakan modifikasi dari program dasar percobaan 2A (Konfigurasi Mode
+Station) pada Modul Praktikum 2, dengan tambahan fitur agar ESP8266 dapat secara
+otomatis mencoba menghubungkan ulang (reconnect) ke jaringan WiFi apabila koneksi
+terputus.
 
-Program ini merupakan modifikasi/gabungan dari program percobaan 2A (mode Station)
-dan percobaan 2B (mode Access Point) pada Modul Praktikum 2, sehingga ESP32 dapat
-terhubung ke jaringan WiFi rumah (Station) sekaligus menyediakan Access Point
-sendiri (AP) secara bersamaan.
+## Penjelasan Baris Kode yang Ditambahkan
 
-## Penjelasan Baris Kode
-
-### 1. Deklarasi kredensial untuk dua peran sekaligus
+### 1. Variabel global untuk pengaturan waktu reconnect
 ```cpp
-const char* sta_ssid     = "NAMA_WIFI_RUMAH_ANDA";
-const char* sta_password = "PASSWORD_WIFI_RUMAH_ANDA";
-
-const char* ap_ssid     = "ESP32_AccessPoint";
-const char* ap_password = "12345678";
+unsigned long previousReconnectMillis = 0;
+const unsigned long reconnectInterval = 5000;
 ```
-- `sta_ssid` dan `sta_password` adalah kredensial jaringan WiFi rumah/eksternal yang
-  akan disambungi ESP32 (peran sebagai klien/Station).
-- `ap_ssid` dan `ap_password` adalah kredensial hotspot yang akan dibuat sendiri
-  oleh ESP32 (peran sebagai Access Point). 
+- `previousReconnectMillis` menyimpan waktu (dalam milidetik) kapan terakhir kali
+  program mencoba melakukan reconnect.
+- `reconnectInterval` menentukan jarak waktu minimal antar percobaan reconnect
+  (5000 ms / 5 detik), agar `WiFi.reconnect()` tidak dipanggil terus-menerus
+  setiap iterasi `loop()` yang dapat membebani modul WiFi.
 
-### 2. Mengatur mode WiFi menjadi AP+STA
+### 2. Mengaktifkan fitur auto-reconnect bawaan library (di `setup()`)
 ```cpp
-WiFi.mode(WIFI_AP_STA);
+WiFi.setAutoReconnect(true);
+WiFi.persistent(true);
 ```
-- `WIFI_AP_STA` memberitahu modul WiFi ESP32 untuk mengaktifkan kedua fungsi
-  sekaligus: menjadi client (STA) dan penyedia jaringan (AP) dalam waktu yang sama.
+- `WiFi.setAutoReconnect(true)` mengaktifkan mekanisme reconnect otomatis internal
+  pada library WiFi ESP32, sehingga modul WiFi akan berusaha menyambung kembali
+  sendiri ketika koneksi terputus.
+- `WiFi.persistent(true)` membuat konfigurasi SSID dan password disimpan pada
+  flash, sehingga tetap tersedia untuk proses reconnect meskipun terjadi restart
+  singkat pada modul WiFi.
 
-### 3. Mengaktifkan bagian Access Point
+### 3. Timeout saat percobaan koneksi awal (di `setup()`)
 ```cpp
-WiFi.softAP(ap_ssid, ap_password);
-IPAddress apIP = WiFi.softAPIP();
-```
-- `WiFi.softAP()` menyalakan hotspot ESP32 dengan SSID dan password yang telah
-  ditentukan.
-- `WiFi.softAPIP()` mengambil alamat IP dari Access Point yang dibuat (default `192.168.4.1`), yang
-  nantinya digunakan oleh perangkat lain untuk mengakses ESP32 melalui jalur AP.
-
-### 4. Memulai koneksi Station dengan batas waktu (timeout)
-```cpp
-WiFi.begin(sta_ssid, sta_password);
-...
 unsigned long startAttempt = millis();
 while (WiFi.status() != WL_CONNECTED && millis() - startAttempt < 15000) {
   delay(500);
   Serial.print(".");
 }
 ```
-- `WiFi.begin()` memulai proses koneksi ke jaringan WiFi rumah pada sisi Station.
-- Diberi batas waktu 15 detik (15000 ms) agar program tidak macet
-  (hang) tanpa batas apabila SSID/password STA salah atau router tidak
-  tersedia.
+- Ditambahkan batas waktu 15 detik (15000 ms) untuk mencoba koneksi awal.
 
-### 5. Penanganan hasil koneksi Station
+### 4. Penanganan jika gagal konek di awal (di `setup()`)
 ```cpp
 if (WiFi.status() == WL_CONNECTED) {
-  // tampilkan IP, MAC, RSSI STA, nyalakan LED
+  ...
 } else {
-  Serial.println("STA gagal terhubung ke WiFi rumah (AP tetap aktif).");
+  Serial.println("Gagal terhubung dalam waktu yang ditentukan, akan dicoba lagi di loop().");
   digitalWrite(ledPin, LOW);
 }
 ```
-- Jika STA berhasil connect, informasi IP/MAC/RSSI ditampilkan dan LED menyala
-  sebagai indikator.
-- Jika STA gagal connect dalam batas waktu, program tetap melanjutkan eksekusi
-  (tidak berhenti), dan yang terpenting Access Point tetap berjalan karena
-  kedua mode bersifat independen satu sama lain.
+- Jika koneksi awal gagal dalam batas waktu timeout, program tidak berhenti,
+  melainkan melanjutkan ke `loop()` di mana proses reconnect otomatis akan
+  diusahakan secara berkala.
 
-### 6. Pemantauan berkala di `loop()`
+### 5. Logika reconnect otomatis di dalam `loop()`
 ```cpp
-if (WiFi.status() == WL_CONNECTED) {
-  Serial.println("Status STA: Terhubung ke WiFi rumah");
-  digitalWrite(ledPin, HIGH);
-} else {
-  Serial.println("Status STA: Terputus dari WiFi rumah");
-  digitalWrite(ledPin, LOW);
+unsigned long currentMillis = millis();
+if (currentMillis - previousReconnectMillis >= reconnectInterval) {
+  previousReconnectMillis = currentMillis;
+  Serial.println("Mencoba menghubungkan ulang ke WiFi...");
+  WiFi.disconnect();
+  WiFi.reconnect();
 }
-
-int jumlahClient = WiFi.softAPgetStationNum();
-Serial.print("Jumlah perangkat terhubung ke AP: ");
-Serial.println(jumlahClient);
 ```
-- Bagian pertama memantau status koneksi sisi STA setiap 5 detik, sama seperti
-  pada program percobaan 2A.
-- Bagian kedua memantau sisi AP dengan `WiFi.softAPgetStationNum()`, yaitu
-  jumlah perangkat yang sedang terhubung ke hotspot ESP32.
-- Kedua pemantauan ini berjalan berdampingan dalam satu `loop()` karena ESP32
-  memang menjalankan dua peran jaringan secara paralel.
+- Blok ini hanya dijalankan ketika `WiFi.status() != WL_CONNECTED` (di dalam
+  cabang `else` pemeriksaan status).
+- Menggunakan `millis()` (bukan `delay()` panjang) untuk mengecek apakah sudah
+  waktunya mencoba reconnect lagi, sesuai `reconnectInterval` yang ditentukan.
+- `WiFi.disconnect()` membersihkan status koneksi lama sebelum mencoba
+  menyambung ulang, agar tidak terjadi konflik status internal.
+- `WiFi.reconnect()` memerintahkan ESP32 untuk mencoba menyambung kembali ke
+  jaringan WiFi menggunakan SSID/password yang sama seperti sebelumnya.

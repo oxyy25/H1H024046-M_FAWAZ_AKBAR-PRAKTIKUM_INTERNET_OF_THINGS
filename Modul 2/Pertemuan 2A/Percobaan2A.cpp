@@ -1,31 +1,59 @@
 #include <ESP8266WiFi.h>
 
-const char *ap_ssid = "ESP32_AccessPointc"; //SSID ESP8266
-const char *ap_password = "12345678"; // minimal 8 karakter
+const char *ssid = "personalX"; //SSID WIFI
+const char *password = "177013003"; // Password wifi
+
+const int ledPin = 4; // LED indikator status koneksi
 
 void setup()
 {
     Serial.begin(115200);
+    pinMode(ledPin, OUTPUT);
+    digitalWrite(ledPin, LOW);
 
-    // Set mode WiFi menjadi Access Point
-    WiFi.mode(WIFI_AP);
-     // Mengaktifkan Access Point dengan SSID dan password
-    WiFi.softAP(ap_ssid, ap_password);
-    // Mengambil alamat IP dari Access Point yang baru dibuat.
-    // Nilainya secara default biasanya 192.168.4.1
-    IPAddress apIP = WiFi.softAPIP();
-    Serial.println("Access Point aktif!");
-    Serial.print("SSID          : "); // cektak nama SSID dari Access Point
-    Serial.println(ap_ssid);
-    Serial.print("IP Address    : "); // cektak alamat IP dari Access Point
-    Serial.println(apIP);
+    // Set mode WiFi menjadi Station
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, password);
+    WiFi.hostname("Test");
+
+    Serial.print("Menghubungkan ke WiFi");
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(500);
+        Serial.print(".");
+    }
+
+    // Jika berhasil terhubung
+    Serial.println();
+    Serial.println("WiFi berhasil terhubung!");
+    Serial.print("IP Address  : ");
+    Serial.println(WiFi.localIP());
+    Serial.print("MAC Address : ");
+    Serial.println(WiFi.macAddress());
+    Serial.print("RSSI (dBm)  : ");
+    Serial.println(WiFi.RSSI());
+
+    digitalWrite(ledPin, HIGH); // nyalakan LED sebagai indikator
 }
 
 void loop()
 {
-    // Menampilkan jumlah perangkat yang terhubung setiap 5 detik
-    int jumlahClient = WiFi.softAPgetStationNum();
-    Serial.print("Jumlah perangkat terhubung: ");
-    Serial.println(jumlahClient);
+    // Cek status koneksi setiap 5 detik
+    if (WiFi.status() == WL_CONNECTED)
+    {
+        Serial.println("\nStatus: Terhubung");
+
+        Serial.print("IP Address  : ");
+        Serial.println(WiFi.localIP());
+        Serial.print("MAC Address : ");
+        Serial.println(WiFi.macAddress());
+        Serial.print("RSSI (dBm)  : ");
+        Serial.println(WiFi.RSSI());
+    }
+    else
+    {
+        Serial.println("Status: Terputus");
+        digitalWrite(ledPin, LOW);
+    }
     delay(5000);
 }
