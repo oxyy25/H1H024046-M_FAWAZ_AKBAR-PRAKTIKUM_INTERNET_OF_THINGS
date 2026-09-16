@@ -1,4 +1,4 @@
-# README — Modifikasi Program HTTP POST (Percobaan 3A, Soal No. 4)
+# Modifikasi Program HTTP POST (Percobaan 3A, Soal No. 4)
 
 ## Tujuan Modifikasi
 Menambahkan data waktu (dalam milidetik sejak ESP32 dinyalakan) ke dalam data JSON
