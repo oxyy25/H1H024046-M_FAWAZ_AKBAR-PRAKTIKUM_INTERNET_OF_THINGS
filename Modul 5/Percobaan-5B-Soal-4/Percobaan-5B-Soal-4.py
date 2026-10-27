@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 BROKER = "broker.hivemq.com"
 PORT = 1883
-TOPIC = "unsoed/tk245004/kelompokAnda/data"  # = topicData ESP32
+TOPIC = "test/sensor"  # = topicData ESP32
 JUMLAH_SAMPEL = 30   # jumlah data
 JENDELA_MA = 5       # [TAMBAHAN] ukuran jendela moving average
 

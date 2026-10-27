@@ -1,7 +1,5 @@
 # Modul 5 - Percobaan 5B: Akuisisi, Analisis, dan Visualisasi Data
 
-Isi: jawaban pertanyaan praktikum 1-3 dan penjelasan modifikasi program no. 4 (file `Percobaan-5B-Soal-4.py`).
-
 ## 1. Fungsi blok try-except pada `on_message()`
 
 Blok try mencoba mengubah pesan MQTT menjadi JSON (json.loads), mengambil kunci "suhu", dan mengubahnya menjadi float. Blok except (ValueError, KeyError) menangkap kesalahan yang mungkin terjadi : 

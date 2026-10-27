@@ -1,7 +1,5 @@
 # Modul 5 - Percobaan 5A: Pengolahan Data Sensor pada ESP32
 
-Isi: jawaban pertanyaan praktikum 1-3 dan penjelasan modifikasi program no. 4 (file `modul5_pengolahan_data.ino`).
-
 ## 1. Flowchart fungsi `hitungMovingAverage()`
 
 ![flowchart](/Modul%205/Dokumentasi/flowchart.jpg)
